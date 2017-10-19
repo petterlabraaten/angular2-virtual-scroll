@@ -2,13 +2,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var core_1 = require("@angular/core");
 var tween = require("@tweenjs/tween.js");
+var DefaultVirtualScrollItemsProvider = (function () {
+    function DefaultVirtualScrollItemsProvider(_array) {
+        this._array = _array;
+    }
+    DefaultVirtualScrollItemsProvider.prototype.getLength = function () {
+        return this._array.length;
+    };
+    DefaultVirtualScrollItemsProvider.prototype.getIterator = function (start, end) {
+        return this._array.slice(start, end)[Symbol.iterator]();
+    };
+    DefaultVirtualScrollItemsProvider.prototype.indexOf = function (item) {
+        return this._array.indexOf(item);
+    };
+    return DefaultVirtualScrollItemsProvider;
+}());
 var VirtualScrollComponent = (function () {
     function VirtualScrollComponent(element, renderer, zone) {
         var _this = this;
         this.element = element;
         this.renderer = renderer;
         this.zone = zone;
-        this.items = [];
+        this._itemsProvider = new DefaultVirtualScrollItemsProvider([]);
         this.bufferAmount = 0;
         this.scrollAnimationTime = 1500;
         this.refreshHandler = function () {
@@ -24,6 +39,19 @@ var VirtualScrollComponent = (function () {
         /** Cache of the last top padding to prevent setting CSS when not needed. */
         this.lastTopPadding = -1;
     }
+    Object.defineProperty(VirtualScrollComponent.prototype, "items", {
+        get: function () {
+            return this._itemsProvider;
+        },
+        set: function (value) {
+            if (value instanceof Array) {
+                value = new DefaultVirtualScrollItemsProvider(value);
+            }
+            this._itemsProvider = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(VirtualScrollComponent.prototype, "parentScroll", {
         get: function () {
             return this._parentScroll;
@@ -67,8 +95,8 @@ var VirtualScrollComponent = (function () {
         var _this = this;
         var el = this.parentScroll instanceof Window ? document.body : this.parentScroll || this.element.nativeElement;
         var offsetTop = this.getElementsOffset();
-        var index = (this.items || []).indexOf(item);
-        if (index < 0 || index >= (this.items || []).length)
+        var index = this._itemsProvider.indexOf(item);
+        if (index < 0 || index >= this._itemsProvider.getLength())
             return;
         var d = this.calculateDimensions();
         var scrollTop = (Math.floor(index / d.itemsPerRow) * d.childHeight)
@@ -141,7 +169,7 @@ var VirtualScrollComponent = (function () {
     VirtualScrollComponent.prototype.calculateDimensions = function () {
         var el = this.parentScroll instanceof Window ? document.body : this.parentScroll || this.element.nativeElement;
         var items = this.items || [];
-        var itemCount = items.length;
+        var itemCount = this._itemsProvider.getLength();
         var viewWidth = el.clientWidth - this.scrollbarWidth;
         var viewHeight = el.clientHeight - this.scrollbarHeight;
         var contentDimensions;
@@ -207,7 +235,7 @@ var VirtualScrollComponent = (function () {
         }
         var maxStart = Math.max(0, maxStartEnd - d.itemsPerCol * d.itemsPerRow - d.itemsPerRow);
         var start = Math.min(maxStart, Math.floor(indexByScrollTop) * d.itemsPerRow);
-        var topPadding = (items == null || items.length === 0) ? 0 : (d.childHeight * Math.ceil(start / d.itemsPerRow) - (d.childHeight * Math.min(start, this.bufferAmount)));
+        var topPadding = (items == null || this._itemsProvider.getLength() === 0) ? 0 : (d.childHeight * Math.ceil(start / d.itemsPerRow) - (d.childHeight * Math.min(start, this.bufferAmount)));
         if (topPadding !== this.lastTopPadding) {
             this.renderer.setStyle(this.contentElementRef.nativeElement, 'transform', "translateY(" + topPadding + "px)");
             this.renderer.setStyle(this.contentElementRef.nativeElement, 'webkitTransform', "translateY(" + topPadding + "px)");
@@ -218,11 +246,11 @@ var VirtualScrollComponent = (function () {
         start -= this.bufferAmount;
         start = Math.max(0, start);
         end += this.bufferAmount;
-        end = Math.min(items.length, end);
+        end = Math.min(this._itemsProvider.getLength(), end);
         if (start !== this.previousStart || end !== this.previousEnd) {
             this.zone.run(function () {
                 // update the scroll list
-                _this.viewPortItems = items.slice(start, end);
+                _this.viewPortItems = _this._itemsProvider.getIterator(start, end);
                 _this.update.emit(_this.viewPortItems);
                 // emit 'start' event
                 if (start !== _this.previousStart && _this.startupLoop === false) {

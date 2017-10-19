@@ -1,4 +1,4 @@
-import { ChangeEvent } from 'angular2-virtual-scroll';
+import { ChangeEvent } from '../virtual-scroll';
 import { Component } from '@angular/core';
 import { Input } from '@angular/core';
 import { ListItem } from './list-item.component';

@@ -1,4 +1,9 @@
 import { ElementRef, EventEmitter, NgZone, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges } from '@angular/core';
+export interface IVirtualScrollItemsProvider<T> {
+    getLength(): number;
+    getIterator(start: number, end: number): Iterator<T>;
+    indexOf(item: T): number;
+}
 export interface ChangeEvent {
     start?: number;
     end?: number;
@@ -7,7 +12,8 @@ export declare class VirtualScrollComponent implements OnInit, OnChanges, OnDest
     private readonly element;
     private readonly renderer;
     private readonly zone;
-    items: any[];
+    private _itemsProvider;
+    items: any[] | IVirtualScrollItemsProvider<any>;
     scrollbarWidth: number;
     scrollbarHeight: number;
     childWidth: number;
@@ -17,8 +23,8 @@ export declare class VirtualScrollComponent implements OnInit, OnChanges, OnDest
     private refreshHandler;
     private _parentScroll;
     parentScroll: Element | Window;
-    update: EventEmitter<any[]>;
-    viewPortItems: any[];
+    update: EventEmitter<Iterator<any>>;
+    viewPortItems: Iterator<any>;
     change: EventEmitter<ChangeEvent>;
     start: EventEmitter<ChangeEvent>;
     end: EventEmitter<ChangeEvent>;

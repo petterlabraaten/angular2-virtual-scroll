@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, ViewChild } from '@angular/core';
-import { VirtualScrollComponent } from 'angular2-virtual-scroll';
+import { VirtualScrollComponent } from '../virtual-scroll';
 import { ListItem } from './list-item.component';
 
 @Component({

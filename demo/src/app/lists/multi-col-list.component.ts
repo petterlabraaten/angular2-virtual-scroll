@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, ViewChild } from '@angular/core';
 
 import { ListItem } from './list-item.component';
-import { VirtualScrollComponent } from 'angular2-virtual-scroll';
+import { VirtualScrollComponent } from '../virtual-scroll';
 
 @Component({
   selector: 'multi-col-list',
